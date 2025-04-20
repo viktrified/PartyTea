@@ -68,118 +68,121 @@ function App() {
     }
   }, [transactionSuccess]);
 
-useEffect(() => {
-  const fetchParties = async () => {
-    if (isConnected ) {
-      setLoading(true);
+  useEffect(() => {
+    const fetchParties = async () => {
+      if (isConnected) {
+        setLoading(true);
 
-      try {
-        console.log("Fetching data for", partyCount, "parties");
+        try {
+          console.log("Fetching data for", partyCount, "parties");
 
-        const partyResults = await Promise.all(
-          Array.from({ length: partyCount }, (_, i) =>
-            publicClient
-              .readContract({
-                address: CONTRACT_ADDRESS,
-                abi: contractABI,
-                functionName: "parties",
-                args: [i],
-              })
-              .then((result) => ({ status: "success", result }))
-              .catch((error) => ({ status: "error", error }))
-          )
-        );
-
-        const memberships = Array(partyCount)
-          .fill()
-          .map(() => ({
-            isMember: false,
-            tokenId: null,
-          }));
-
-        let tokenPartyIndices = [];
-
-        if (address) {
-          const membershipResults = await Promise.all(
+          const partyResults = await Promise.all(
             Array.from({ length: partyCount }, (_, i) =>
               publicClient
                 .readContract({
                   address: CONTRACT_ADDRESS,
                   abi: contractABI,
-                  functionName: "isMember",
-                  args: [i, address],
+                  functionName: "parties",
+                  args: [i],
                 })
                 .then((result) => ({ status: "success", result }))
                 .catch((error) => ({ status: "error", error }))
             )
           );
 
-          console.log("Membership results:", membershipResults);
+          const memberships = Array(partyCount)
+            .fill()
+            .map(() => ({
+              isMember: false,
+              tokenId: null,
+            }));
 
-          const tokenCalls = [];
+          let tokenPartyIndices = [];
 
-          for (let i = 0; i < partyCount; i++) {
-            if (
-              membershipResults[i].status === "success" &&
-              membershipResults[i].result === true
-            ) {
-              memberships[i].isMember = true;
-              tokenPartyIndices.push(i);
-              tokenCalls.push(
+          if (address) {
+            const membershipResults = await Promise.all(
+              Array.from({ length: partyCount }, (_, i) =>
                 publicClient
                   .readContract({
                     address: CONTRACT_ADDRESS,
                     abi: contractABI,
-                    functionName: "memberTokens",
-                    args: [address, i],
+                    functionName: "isMember",
+                    args: [i, address],
                   })
                   .then((result) => ({ status: "success", result }))
                   .catch((error) => ({ status: "error", error }))
+              )
+            );
+
+            console.log("Membership results:", membershipResults);
+
+            const tokenCalls = [];
+
+            for (let i = 0; i < partyCount; i++) {
+              if (
+                membershipResults[i].status === "success" &&
+                membershipResults[i].result === true
+              ) {
+                memberships[i].isMember = true;
+                tokenPartyIndices.push(i);
+                tokenCalls.push(
+                  publicClient
+                    .readContract({
+                      address: CONTRACT_ADDRESS,
+                      abi: contractABI,
+                      functionName: "memberTokens",
+                      args: [address, i],
+                    })
+                    .then((result) => ({ status: "success", result }))
+                    .catch((error) => ({ status: "error", error }))
+                );
+              }
+            }
+
+            const tokenResults = await Promise.all(tokenCalls);
+
+            for (let i = 0; i < tokenResults.length; i++) {
+              if (tokenResults[i].status === "success") {
+                const partyIndex = tokenPartyIndices[i];
+                memberships[partyIndex].tokenId = tokenResults[i].result;
+              }
+            }
+          }
+
+          const processedParties = [];
+          for (let i = 0; i < partyCount; i++) {
+            if (partyResults[i].status === "success") {
+              const partyData = partyResults[i].result;
+
+              processedParties.push({
+                id: i,
+                name: partyData[0],
+                joinFee: partyData[1],
+                memberCount: Number(partyData[2]),
+                totalContributions: partyData[3],
+                isMember: memberships[i].isMember,
+                tokenId: memberships[i].tokenId,
+              });
+            } else {
+              console.error(
+                `Error fetching party ${i}:`,
+                partyResults[i].error
               );
             }
           }
 
-          const tokenResults = await Promise.all(tokenCalls);
-
-          for (let i = 0; i < tokenResults.length; i++) {
-            if (tokenResults[i].status === "success") {
-              const partyIndex = tokenPartyIndices[i];
-              memberships[partyIndex].tokenId = tokenResults[i].result;
-            }
-          }
+          console.log("Processed parties:", processedParties);
+          setParties(processedParties);
+        } catch (error) {
+          console.error("Error fetching parties:", error);
+        } finally {
+          setLoading(false);
         }
-
-        const processedParties = [];
-        for (let i = 0; i < partyCount; i++) {
-          if (partyResults[i].status === "success") {
-            const partyData = partyResults[i].result;
-
-            processedParties.push({
-              id: i,
-              name: partyData[0],
-              joinFee: partyData[1],
-              memberCount: Number(partyData[2]),
-              totalContributions: partyData[3],
-              isMember: memberships[i].isMember,
-              tokenId: memberships[i].tokenId,
-            });
-          } else {
-            console.error(`Error fetching party ${i}:`, partyResults[i].error);
-          }
-        }
-
-        console.log("Processed parties:", processedParties);
-        setParties(processedParties);
-      } catch (error) {
-        console.error("Error fetching parties:", error);
-      } finally {
-        setLoading(false);
       }
-    }
-  };
+    };
 
-  fetchParties();
-}, [partyCount, isConnected, address, publicClient, refreshCounter]);
+    fetchParties();
+  }, [partyCount, isConnected, address, publicClient, refreshCounter]);
 
   const handleCreateParty = async () => {
     if (!newPartyName || !newPartyFee) {

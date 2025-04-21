@@ -9,7 +9,7 @@ const NFTDisplay = ({ contractAddress, tokenId }) => {
 
   const { data: tokenURIData } = useReadContract({
     address: contractAddress,
-    abi: contractABI.abi,
+    abi: contractABI,
     functionName: "tokenURI",
     args: [tokenId],
     enabled: tokenId !== null && tokenId !== undefined,

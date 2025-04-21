@@ -35,7 +35,7 @@ function App() {
 
   const { data: partyCountData, refetch: refetchPartyCount } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi: contractABI.abi,
+    abi: contractABI,
     functionName: "partyCount",
   });
 
@@ -72,6 +72,7 @@ function App() {
     const fetchParties = async () => {
       if (isConnected) {
         setLoading(true);
+        // console.log("loading:", loading)
 
         try {
           console.log("Fetching data for", partyCount, "parties");
@@ -248,7 +249,6 @@ function App() {
       {loading ? (
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1abc9c]">
-            Loading....
           </div>
         </div>
       ) : parties.length > 0 ? (
@@ -300,7 +300,7 @@ function App() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 bg-gray-800 rounded-lg">
+        <div className="text-center py-8 bg-gray-700 rounded-lg">
           <p className="text-white">No parties available to join</p>
         </div>
       )}
@@ -323,12 +323,12 @@ function App() {
             .map((party) => (
               <div
                 key={party.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow"
+                className="border border-gray-200 space-y-3 rounded-lg p-4 hover:shadow-lg transition-shadow"
               >
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                <h3 className="text-xl font-semibold text-gray-200 mb-2">
                   {party.name}
                 </h3>
-                <p className="text-gray-600 mb-1">
+                <p className="text-gray-500 mb-1">
                   Token ID:{" "}
                   <span className="font-medium">
                     {party.tokenId !== null && party.tokenId !== undefined
@@ -352,7 +352,7 @@ function App() {
                     </div>
                   </div>
                 )}
-
+{/* 
                 <button
                   onClick={() => {
                     if (party.tokenId !== null && party.tokenId !== undefined) {
@@ -373,12 +373,12 @@ function App() {
                   }`}
                 >
                   View on OpenSea
-                </button>
+                </button> */}
               </div>
             ))}
         </div>
       ) : (
-        <div className="text-center py-8 bg-gray-800 rounded-lg">
+        <div className="text-center py-8 bg-gray-700 rounded-lg">
           <p className="text-white">You are not a member of any parties</p>
         </div>
       )}
@@ -386,25 +386,25 @@ function App() {
   );
 
   const renderAdminTab = () => (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Admin Panel</h2>
+    <div className="bg-gray-800 rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold text-white mb-6">Admin Panel</h2>
 
       <div className="mb-8 p-4 border border-gray-200 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-700 mb-4">
+        <h3 className="text-xl font-semibold text-white mb-4">
           Create New Party
         </h3>
         <div className="mb-4">
-          <label className="block text-gray-600 mb-2">Name:</label>
+          <label className="block text-gray-400 mb-2">Name:</label>
           <input
             type="text"
             value={newPartyName}
             onChange={(e) => setNewPartyName(e.target.value)}
             placeholder="Party Name"
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1abc9c]"
+            className="w-full p-2 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1abc9c]"
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-600 mb-2">Join Fee (ETH):</label>
+          <label className="block text-gray-400 mb-2">Join Fee (ETH):</label>
           <input
             type="text"
             value={newPartyFee}
@@ -420,7 +420,7 @@ function App() {
           }
           className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
             loading || isWaitingForTransaction || !newPartyName || !newPartyFee
-              ? "bg-gray-300 cursor-not-allowed"
+              ? "bg-[#1abc9c] cursor-not-allowed"
               : "bg-[#1abc9c] hover:bg-[#5ce8c1] text-gray-800"
           }`}
         >
@@ -479,7 +479,7 @@ function App() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <div className="text-c rounded-lg">
             <p className="text-gray-500">No parties created yet</p>
           </div>
         )}
@@ -489,15 +489,15 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <header className="bg-gray-800 shadow-sm py-4 px-6">
+      <header className="bg-gray-800 shadow-sm py-4 px-6 fixed w-full">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-white">PartyTea</h1>
+          <h1 className="text-4xl font-bold text-[#1abc9c]">PartyTea</h1>
           <ConnectButton />
         </div>
       </header>
 
       {isConnected ? (
-        <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 pt-[100px]">
           <nav className="flex space-x-2 mb-6 border-b border-gray-200">
             <button
               className={`py-2 px-4 font-medium rounded-t-lg ${
@@ -538,7 +538,7 @@ function App() {
           {activeTab === "admin" && isOwner && renderAdminTab()}
         </main>
       ) : (
-        <div className="max-w-7xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto py-20 px-4 sm:px-6 lg:px-8 text-center pt-[100px]">
           <div className="bg-gray-700 p-8 rounded-lg shadow-md max-w-md mx-auto items-center flex flex-col ">
             <h2 className="text-xl font-semibold text-white mb-4">
               Connect Your Wallet
